@@ -11,9 +11,9 @@ namespace testparser.DbService
     {
         private readonly string _connectionString;
 
-        public DatabaseClear(string connectionString)
+        public DatabaseClear(DatabaseConnection connection)
         {
-            _connectionString = connectionString;
+            _connectionString = connection.ConnectionString;
         }
         public void DeleteSwitchers()
         {

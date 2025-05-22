@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using NPOI.HSSF.UserModel;
 using NPOI.SS.UserModel;
 using NPOI.XSSF.UserModel;
-using testparser.Entity;
+using ParserFortTelecom.Entity;
 using testparser.Parsers.Interfaces;
 
 class OsnovoParser : ISwitchParser
@@ -17,6 +17,13 @@ class OsnovoParser : ISwitchParser
     private static readonly string PRICEURL = "https://osnovo.ru/files/osnovo-price.xlsx";
     private static readonly string PRICEFILE = "osnovo-price.xlsx";
     private static readonly string PRICEFILEPATH = Path.Combine(Directory.GetCurrentDirectory(), PRICEFILE);
+    private readonly HttpClient _httpClient;
+
+    public OsnovoParser(HttpClient httpClient)
+    {
+        _httpClient = httpClient;
+        _httpClient.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
+    }
 
     public async Task<List<SwitchData>> ParseAsync()
     {
@@ -28,13 +35,10 @@ class OsnovoParser : ISwitchParser
     {
         try
         {
-            using HttpClient httpClient = new HttpClient();
-            httpClient.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
-
-            byte[] fileBytes = await httpClient.GetByteArrayAsync(FILEURL);
+            byte[] fileBytes = await _httpClient.GetByteArrayAsync(FILEURL);
             await File.WriteAllBytesAsync(FILEPATH, fileBytes);
 
-            byte[] priceBytes = await httpClient.GetByteArrayAsync(PRICEURL);
+            byte[] priceBytes = await _httpClient.GetByteArrayAsync(PRICEURL);
             await File.WriteAllBytesAsync(PRICEFILEPATH, priceBytes);
         }
         catch (Exception ex)
@@ -69,7 +73,7 @@ class OsnovoParser : ISwitchParser
                 string? management = sheet.GetRow(18)?.GetCell(col)?.ToString();
                 bool controllable = management != "-";
                 string? ups = sheet.GetRow(35)?.GetCell(col)?.ToString();
-                bool UPS = ups == "-" ? false : true;
+                bool UPS = ups != "-";
                 string? price = GetPriceFromPriceList(title);
 
                 if (!string.IsNullOrEmpty(title))
@@ -83,6 +87,7 @@ class OsnovoParser : ISwitchParser
                         PoEports = int.TryParse(totalPorts, out int total) ? total : (int?)null,
                         SFPports = int.TryParse(sfpPorts, out int sfp) ? sfp : (int?)null,
                         controllable = controllable,
+                        dateload = DateTime.Now.ToString("yyyy.MM.dd"),
                         UPS = UPS
                     });
                 }

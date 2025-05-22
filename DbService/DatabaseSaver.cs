@@ -1,13 +1,18 @@
 ﻿using Npgsql;
-using testparser.Entity;
+using ParserFortTelecom.Entity;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 public class DatabaseSaver
 {
     private readonly string _connectionString;
 
-    public DatabaseSaver(string connectionString)
+    public DatabaseSaver(DatabaseConnection connection)
     {
-        _connectionString = connectionString;
+        _connectionString = connection.ConnectionString;
     }
 
     public void SaveSwitches(List<SwitchData> switches)
@@ -18,16 +23,17 @@ public class DatabaseSaver
 
             foreach (var sw in switches)
             {
-                string query = $"CALL prc_insert_masterman_switch(" +
+                string query = $"CALL updateswitch(" +
                     $"'{sw.Company}', " +
                     $"'{sw.Name.Replace("'", "''")}', " +
-                    $"'{sw.Url.Replace("'", "''")}', " +
                     $"{sw.Price}, " +
                     $"{(sw.PoEports.HasValue ? sw.PoEports.Value.ToString() : "NULL")}, " +
                     $"{(sw.SFPports.HasValue ? sw.SFPports.Value.ToString() : "NULL")}, " +
                     $"{(sw.UPS.HasValue ? sw.UPS.Value.ToString().ToLower() : "NULL")}, " +
-                    $"{sw.controllable.ToString().ToLower()});";
-
+                    $"'{sw.dateload}', " +
+                //Console.Write(sw.dateload);
+                   $"{sw.controllable.ToString().ToLower()});";
+                //$"{("2025-03-31")}";
                 using NpgsqlCommand cmd = new NpgsqlCommand(query, conn);
                 cmd.ExecuteNonQuery();
             }
@@ -35,4 +41,14 @@ public class DatabaseSaver
             conn.Close();
         }
     }
+    public void falseall()
+    {
+        using (NpgsqlConnection conn = new NpgsqlConnection(_connectionString))
+        {
+            conn.Open();
+            string query = $"CALL allfalse();";
+            conn.Close();
+        }
+    }
 }
+

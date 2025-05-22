@@ -1,16 +1,17 @@
 ﻿using HtmlAgilityPack;
 using System.Text.RegularExpressions;
-using testparser.Entity;
+using ParserFortTelecom.Entity;
 using testparser.Parsers.Interfaces;
 
 public class MasterManParser : ISwitchParser
 {
     private const string NAMECOMPANY = "MASTERMANN";
     private const string URL = "https://mastermann.ru/setevoe-oborudovanie/upravlyaemyie-kommutatoryi/";
-    private static readonly HttpClient httpClient = new HttpClient();
+    private readonly HttpClient httpClient = new HttpClient();
 
-    static MasterManParser()
+    public MasterManParser(HttpClient _httpClient)
     {
+        httpClient = _httpClient;
         httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
     }
 
@@ -83,9 +84,9 @@ public class MasterManParser : ISwitchParser
                 {
                     price = int.Parse(match.Value);
                 }
-                Console.WriteLine($"цена: {price}"); 
+                Console.WriteLine($"цена: {price}");
             }
-
+            name.Replace("Коммутатор уличный Mastermann", name);
             return new SwitchData
             {
                 Name = name,
@@ -93,6 +94,7 @@ public class MasterManParser : ISwitchParser
                 Price = price,
                 PoEports = PoE,
                 SFPports = SFP,
+                dateload = DateTime.Now.ToString("yyyy.MM.dd"),
                 UPS = isUPS
             };
         }
