@@ -1,37 +1,51 @@
-﻿using ParserFortTelecom.Parsers;
+﻿using Microsoft.Extensions.DependencyInjection;
+using ParserFortTelecom.Parsers;
+using System;
+using System.Net.Http;
+using System.Threading.Tasks;
+using testparser.Parsers.Interfaces;
 using testparser.Parsers;
-
+using testparser;
+using Microsoft.Extensions.Logging;
 
 class Program
 {
     static async Task Main()
     {
-        var dbConnection = new DatabaseConnection(); //подключение к бд
-        var dbSaver = new DatabaseSaver(dbConnection);
-        using HttpClient client = new HttpClient();
+        var services = new ServiceCollection();
 
-        dbSaver.falseall();
-        Console.WriteLine("Данные false");
+        services.AddLogging(configure => configure
+            .AddConsole() 
+            .SetMinimumLevel(LogLevel.Debug) 
+        );
 
-        var parsermasterman = new MasterManParser(client); //обьявляем парсер
-        var switchesmasterman = await parsermasterman.ParseAsync(); // получаем данные
-        dbSaver.SaveSwitches(switchesmasterman); // сохраняем в бд
+        services.AddSingleton<DatabaseConnection>(); 
+        services.AddTransient<DatabaseSaver>();     
+        services.AddSingleton<HttpClient>();
 
-        var parseOSNOVO = new OsnovoParser(client);
-        var switchesOSNOVO = await parseOSNOVO.ParseAsync();
-        dbSaver.SaveSwitches(switchesOSNOVO);
-        switchesOSNOVO.Clear();
+        services.AddTransient<MasterManParser>();
+        //services.AddTransient<ISwitchParser, MasterManParser>();
+        services.AddTransient<OsnovoParser>();
+       // services.AddTransient<ISwitchParser, OsnovoParser>();
+        services.AddTransient<NSGateParser>();
+        //services.AddTransient<ISwitchParser, NSGateParser>();
+        services.AddTransient<TFortisParser>();
+        //services.AddTransient<ISwitchParser, TFortisParser>();
+        services.AddTransient<RelionParser>();
+        //services.AddTransient<ISwitchParser, RelionParser>();
+        services.AddTransient<App>();
 
-        var parseNSGATE = new NSGateParser(client);
-        var switchesNSGATE = await parseNSGATE.ParseAsync();
-        dbSaver.SaveSwitches(switchesNSGATE);
+        var serviceProvider = services.BuildServiceProvider();
 
-        var parseTFortis = new TFortisParser();
-        var switchesTFortis = await parseTFortis.ParseAsync();
-        dbSaver.SaveSwitches(switchesTFortis);
-
-        var parseRelion = new RelionParser(client);
-        var switchesRelion = await parseRelion.ParseAsync();
-        dbSaver.SaveSwitches(switchesRelion);
+        try
+        {
+            var app = serviceProvider.GetRequiredService<App>();
+            await app.Run();
+        }
+        catch (Exception ex)
+        {
+            var logger = serviceProvider.GetRequiredService<ILogger<Program>>();
+            logger.LogCritical(ex, "Критическая ошибка в приложении: {Message}", ex.Message);
+        }
     }
 }

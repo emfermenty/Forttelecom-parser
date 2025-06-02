@@ -17,6 +17,7 @@ class OsnovoParser : ISwitchParser
     private static readonly string PRICEURL = "https://osnovo.ru/files/osnovo-price.xlsx";
     private static readonly string PRICEFILE = "osnovo-price.xlsx";
     private static readonly string PRICEFILEPATH = Path.Combine(Directory.GetCurrentDirectory(), PRICEFILE);
+    private const string NAMECOMPANY = "OSNOVO";
     private readonly HttpClient _httpClient;
 
     public OsnovoParser(HttpClient httpClient)
@@ -78,18 +79,16 @@ class OsnovoParser : ISwitchParser
 
                 if (!string.IsNullOrEmpty(title))
                 {
-                    switches.Add(new SwitchData
-                    {
-                        Company = "OSNOVO",
-                        Name = title,
-                        Url = FILEURL,
-                        Price = int.TryParse(price, out int parsedPrice) ? parsedPrice : 0,
-                        PoEports = int.TryParse(totalPorts, out int total) ? total : (int?)null,
-                        SFPports = int.TryParse(sfpPorts, out int sfp) ? sfp : (int?)null,
-                        controllable = controllable,
-                        dateload = DateTime.Now.ToString("yyyy.MM.dd"),
-                        UPS = UPS
-                    });
+                    switches.Add(SwitchData.CreateSwitch(
+                        Company: NAMECOMPANY,
+                        Name: title,
+                        Url: FILEURL,
+                        Price: int.TryParse(price, out int parsedPrice) ? parsedPrice : 0,
+                        PoEports: int.TryParse(totalPorts, out int total) ? total : (int?)null,
+                        SFPports: int.TryParse(sfpPorts, out int sfp) ? sfp : (int?)null,
+                        controllable: controllable,
+                        UPS: UPS
+                        ));
                 }
             }
         }

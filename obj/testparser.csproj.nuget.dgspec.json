@@ -53,6 +53,18 @@
               "target": "Package",
               "version": "[1.11.74, )"
             },
+            "Microsoft.Extensions.DependencyInjection": {
+              "target": "Package",
+              "version": "[9.0.5, )"
+            },
+            "Microsoft.Extensions.Logging": {
+              "target": "Package",
+              "version": "[9.0.5, )"
+            },
+            "Microsoft.Extensions.Logging.Console": {
+              "target": "Package",
+              "version": "[9.0.5, )"
+            },
             "Microsoft.Playwright": {
               "target": "Package",
               "version": "[1.50.0, )"
@@ -72,10 +84,6 @@
             "System.Configuration.ConfigurationManager": {
               "target": "Package",
               "version": "[9.0.3, )"
-            },
-            "iTextSharp": {
-              "target": "Package",
-              "version": "[5.5.13.4, )"
             },
             "itext7": {
               "target": "Package",

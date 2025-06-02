@@ -33,11 +33,7 @@ public class MasterManParser : ISwitchParser
             if (!name.Contains("Коммутатор", StringComparison.OrdinalIgnoreCase)) continue;
 
             var details = await ParseSwitchDetails(link, name);
-            if (details != null)
-            {
-                details.Company = NAMECOMPANY;
                 switches.Add(details);
-            }
         }
 
         return switches;
@@ -77,7 +73,6 @@ public class MasterManParser : ISwitchParser
             if (priceNode != null)
             {
                 string rawPrice = priceNode.InnerText.Trim();
-                //Console.WriteLine($"Сырые данные о цене: '{rawPrice}'"); 
                 rawPrice = Regex.Replace(rawPrice, @"\s+", "");
                 Match match = Regex.Match(rawPrice, @"\d+");
                 if (match.Success)
@@ -87,16 +82,16 @@ public class MasterManParser : ISwitchParser
                 Console.WriteLine($"цена: {price}");
             }
             name.Replace("Коммутатор уличный Mastermann", name);
-            return new SwitchData
-            {
-                Name = name,
-                Url = url,
-                Price = price,
-                PoEports = PoE,
-                SFPports = SFP,
-                dateload = DateTime.Now.ToString("yyyy.MM.dd"),
-                UPS = isUPS
-            };
+            return SwitchData.CreateSwitch(
+                Company: NAMECOMPANY,
+                Name: name,
+                Url: url,
+                Price: price,
+                PoEports: PoE,
+                SFPports: SFP,
+                controllable: true,
+                UPS: isUPS
+                );
         }
         catch (Exception ex)
         {

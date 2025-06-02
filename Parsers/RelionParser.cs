@@ -20,6 +20,7 @@ namespace ParserFortTelecom.Parsers
         private static readonly string FILEURL = "https://relion-ex.ru/sites/default/files/price/yanvar2025/new/Price_Relion.xlsx";
         private static readonly string FILENAME = "Price_Relion.xlsx";
         private static readonly string FILEPATH = Path.Combine(Directory.GetCurrentDirectory(), FILENAME);
+        private const string NAMECOMPANY = "РЕЛИОН";
         private readonly HttpClient _httpClient;
         public RelionParser(HttpClient httpClient)
         {
@@ -82,18 +83,16 @@ namespace ParserFortTelecom.Parsers
                     string stringcell = cell.ToString();
                     int.TryParse(stringcell, out int price);
                     Console.WriteLine(columnName + " " + sfpcount + " " + poecount + " " + hasups + " " + price);
-                    switches.Add(new SwitchData
-                    {
-                        Company = "РЕЛИОН",
-                        Name = columnName,
-                        Url = null,
-                        Price = price,
-                        PoEports = poecount,
-                        SFPports = sfpcount,
-                        controllable = true,
-                        dateload = DateTime.Now.ToString("yyyy.MM.dd"),
-                        UPS = hasups
-                    });
+                    switches.Add(SwitchData.CreateSwitch(
+                        Company: NAMECOMPANY,
+                        Name: columnName,
+                        Url: null,
+                        Price: price,
+                        PoEports: poecount,
+                        SFPports: sfpcount,
+                        controllable: true,
+                        UPS: hasups
+                        ));
                 }
             }
             return switches;

@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-public class DatabaseSaver
+public class DatabaseSaver : IDatabaseSaver
 {
     private readonly string _connectionString;
 

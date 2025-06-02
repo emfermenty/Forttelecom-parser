@@ -3,11 +3,9 @@ using ParserFortTelecom.Entity;
 using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using System.Xml;
 using testparser.Parsers.Interfaces;
 using UglyToad.PdfPig;
-using UglyToad.PdfPig.Graphics;
+
 
 namespace testparser.Parsers
 {
@@ -101,18 +99,15 @@ namespace testparser.Parsers
                             Console.WriteLine($"Количество портов: {portCount}");
                             Console.WriteLine("Контролируемый: " + conrolable);
                             Console.WriteLine("цена: " + await GetPriceAsync(name));
-                            switches.Add(new SwitchData
-                            {
-                                Company = TITLE_COMPANY,
-                                Name = name,
-                                Url = URL,
-                                Price = await GetPriceAsync(name),
-                                PoEports = portCount,
-                                SFPports = uplinkCount,
-                                controllable = conrolable,
-                                dateload = DateTime.Now.ToString("yyyy.MM.dd"),
-                                UPS = ups
-                            });
+                            switches.Add(SwitchData.CreateSwitch(
+                                Company: TITLE_COMPANY,
+                                Name: name,
+                                Url: URL,
+                                Price: await GetPriceAsync(name),
+                                PoEports: portCount,
+                                SFPports: uplinkCount,
+                                controllable: conrolable,
+                                UPS: ups));
                         }
                     }
                     return switches;
@@ -131,12 +126,10 @@ namespace testparser.Parsers
         private async Task<int> GetPriceAsync(string name)
         {
             using var document = PdfDocument.Open(PRICEFILEPATH);
-
-            // Начинаем с третьей страницы (индекс 3)
             for (int i = 3; i < document.NumberOfPages; i++)
             {
                 var page = document.GetPage(i);
-                string text = page.Text; // Извлекаем текст страницы
+                string text = page.Text; 
                 string[] lines = text.Split('\n'); // Разбиваем на строки
 
                 foreach (string line in lines)

@@ -58,24 +58,23 @@ namespace ParserFortTelecom.Parsers
                                     //Console.Write(" цена: " + current.GetCell(col + 1));
                                     string? priceString = current.GetCell(col + 1).ToString();
                                     priceString = priceString.Replace(" ", "");
-                                    int intValue = 0;
+                                    int price = 0;
                                     if (decimal.TryParse(priceString, out decimal result))
                                     {
 
-                                        intValue = (int)result; // Преобразуем decimal в int, округляя вниз
-                                        Console.WriteLine(" ЦЕНА: " + intValue);
+                                        price = (int)result; 
+                                        Console.WriteLine(" ЦЕНА: " + price);
                                     }
-                                    switches.Add(new SwitchData
-                                    {
-                                        Company = COMPANY,
-                                        Name = title,
-                                        Price = intValue,
-                                        PoEports = structData.PoePorts,
-                                        SFPports = structData.SfpPorts,
-                                        controllable = true,
-                                        UPS = structData.HasUps,
-                                        dateload = DateTime.Now.ToString("yyyy.MM.dd"),
-                                    });
+                                    switches.Add(SwitchData.CreateSwitch(
+                                        Company: COMPANY,
+                                        Url: null,
+                                        Name: title,
+                                        Price: price,
+                                        PoEports: structData.PoePorts,
+                                        SFPports: structData.SfpPorts,
+                                        controllable: true,
+                                        UPS: structData.HasUps
+                                        ));
                                     Console.WriteLine();
                                 }
                             }
