@@ -79,6 +79,14 @@ class OsnovoParser : ISwitchParser
 
                 if (!string.IsNullOrEmpty(title))
                 {
+                    Console.WriteLine();
+                    Console.WriteLine("Имя: " + title);
+                    //Console.WriteLine("Описание: " + description);
+                    Console.WriteLine("UPS: " + ups);
+                    Console.WriteLine("uplink: " + sfpPorts);
+                    Console.WriteLine($"Количество портов: {totalPorts}");
+                    Console.WriteLine("Контролируемый: " + controllable);
+                    Console.WriteLine("цена: " + price);
                     switches.Add(SwitchData.CreateSwitch(
                         Company: NAMECOMPANY,
                         Name: title,

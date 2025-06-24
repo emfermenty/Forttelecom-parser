@@ -6,7 +6,6 @@ using System.Text.RegularExpressions;
 using testparser.Parsers.Interfaces;
 using UglyToad.PdfPig;
 
-
 namespace testparser.Parsers
 {
     internal class NSGateParser : ISwitchParser
@@ -80,13 +79,8 @@ namespace testparser.Parsers
                             // вытягиваем порты
                             Match portMatch = Regex.Match(description, @"(\d+)\s+порт");
                             int portCount = portMatch.Success ? int.Parse(portMatch.Groups[1].Value) : 0;
-                            Match uplinkMatch = Regex.Match(description,
-                            @"(?:^|\s)(1|2)\s+(?:TP порт uplink|1G/2\.5G SFP uplink|SFP/1G uplink|SFP uplink|uplink порт)\b");
-                            if (!uplinkMatch.Success)
-                            {
-                                // Попробуем альтернативный вариант, если первый не сработал
-                                uplinkMatch = Regex.Match(description, @"(\d+)\s*uplink");
-                            }
+
+                            Match uplinkMatch = Regex.Match(name, @"-(\d)");
                             int uplinkCount = uplinkMatch.Success ? int.Parse(uplinkMatch.Groups[1].Value) : 0;
 
                             bool ups = name.Contains("R") ? true : false;
@@ -155,11 +149,6 @@ namespace testparser.Parsers
             return -1;
         }
 
-        private static string FindPriceInLine(string line)
-        {
-            var priceMatch = System.Text.RegularExpressions.Regex.Match(line, @"\d{1,6}(\s?\d{3})*(,\d{2})?");
-            return priceMatch.Success ? priceMatch.Value : "";
-        }
         private async Task DownloadPDF()
         {
             var response = await _httpClient.GetAsync(URL_PRICE);

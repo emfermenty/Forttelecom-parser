@@ -2,11 +2,12 @@
 using System.Text.RegularExpressions;
 using ParserFortTelecom.Entity;
 using testparser.Parsers.Interfaces;
+using PuppeteerSharp;
 
 public class MasterManParser : ISwitchParser
 {
     private const string NAMECOMPANY = "MASTERMANN";
-    private const string URL = "https://mastermann.ru/setevoe-oborudovanie/upravlyaemyie-kommutatoryi/";
+    private const string URL = "https://mastermann.ru/catalog/mounting-cabinets/kompozitnyie-shkafyi/kommutatory-ulichnye/";
     private readonly HttpClient httpClient = new HttpClient();
 
     public MasterManParser(HttpClient _httpClient)
@@ -17,86 +18,94 @@ public class MasterManParser : ISwitchParser
 
     public async Task<List<SwitchData>> ParseAsync()
     {
-        List<SwitchData> switches = new();
-        string html = await httpClient.GetStringAsync(URL);
+        return await ParseSwitchDetails();
+    }
+
+    private async Task<List<SwitchData>> ParseSwitchDetails()
+    {
+        var switches = new List<SwitchData>();
+        var browserFetcher = new BrowserFetcher();
+
+        Console.WriteLine("Скачиваем браузер...");
+        await browserFetcher.DownloadAsync();
+
+        string executablePath = browserFetcher.GetExecutablePath(
+            browserFetcher.GetInstalledBrowsers().First().BuildId
+        );
+
+        Console.WriteLine("Запускаем браузер...");
+        await using var browser = await Puppeteer.LaunchAsync(new LaunchOptions
+        {
+            Headless = true,
+            ExecutablePath = executablePath,
+            Timeout = 30000
+        });
+        Console.WriteLine("Открываем страницу...");
+        await using var page = await browser.NewPageAsync();
+
+        await page.GoToAsync(
+            URL,
+            new NavigationOptions { WaitUntil = new[] { WaitUntilNavigation.Networkidle2 } }
+        );
+        await Task.Delay(5000);
+
+        string html = await page.GetContentAsync();
+
         var doc = new HtmlDocument();
         doc.LoadHtml(html);
+        var productNodes = doc.DocumentNode.SelectNodes("//div[contains(@class, 'catalog-block__inner')]");
 
-        var productNodes = doc.DocumentNode.SelectNodes("//div[contains(@class, 'name')]/a[contains(@class, 'ani')]");
-        if (productNodes == null) return switches;
+        if (productNodes == null)
+            throw new Exception("Товары не найдены");
 
         foreach (var node in productNodes)
         {
-            string name = node.InnerText.Trim();
-            string link = node.GetAttributeValue("href", "");
+            string fine = node.InnerText;
 
-            if (!name.Contains("Коммутатор", StringComparison.OrdinalIgnoreCase)) continue;
+            Match nameMatch = Regex.Match(fine, @"Коммутатор уличный Mastermann [^\n<]+");
+            string name = nameMatch.Success ? nameMatch.Value.Trim() : "Название не найдено";
 
-            var details = await ParseSwitchDetails(link, name);
-                switches.Add(details);
+            Match priceMatch = Regex.Match(fine, @"(\d+)(?:&nbsp;)?(\d+)");
+            string price = priceMatch.Success
+                ? $"{priceMatch.Groups[1].Value} {priceMatch.Groups[2].Value}".Trim().Replace(" ", "")
+                : "Цена не найдена";
+
+            // 3. Выводим результат
+            if (name != "Название не найдено" && price != "Цена не найдено")
+            {
+                Console.WriteLine($"ahaha: {name} | : {price} ");
+            }
+            var match = Regex.Match(name,
+                @"MM(\d+)G(PoE)?-(\d+)SFP(-UPS)?",
+                RegexOptions.IgnoreCase);
+            if (match.Success)
+            {
+                int portsCount = int.Parse(match.Groups[1].Value);
+                bool hasPoE = match.Groups[2].Success;
+                int sfpCount = int.Parse(match.Groups[3].Value);
+                bool hasUPS = match.Groups[4].Success;
+
+                Console.WriteLine($"Портов: {portsCount}");
+                Console.WriteLine($"PoE: {hasPoE}");
+                Console.WriteLine($"SFP: {sfpCount}");
+                Console.WriteLine($"UPS: {hasUPS}");
+                int finprice = int.Parse(price);
+                switches.Add(SwitchData.CreateSwitch(
+                                Company: NAMECOMPANY,
+                                Name: name,
+                                Url: URL,
+                                Price: finprice,
+                                PoEports: portsCount,
+                                SFPports: sfpCount,
+                                controllable: true,
+                                UPS: hasUPS));
+            }
+            else
+            {
+                Console.WriteLine("Формат модели не распознан");
+            }
         }
-
         return switches;
     }
-
-    private async Task<SwitchData?> ParseSwitchDetails(string url, string name)
-    {
-        try
-        {
-            string html = await httpClient.GetStringAsync(url);
-            var document = new HtmlDocument();
-            document.LoadHtml(html);
-
-            int? PoE = null, SFP = null;
-            bool isUPS = name.Contains("UPS", StringComparison.OrdinalIgnoreCase);
-            int price = 0;
-
-            var ulNodes = document.DocumentNode.SelectNodes("//div[contains(@class, 'shortdescription')]//ul");
-            if (ulNodes != null)
-            {
-                foreach (var ul in ulNodes)
-                {
-                    var liNodes = ul.SelectNodes(".//li");
-                    if (liNodes != null)
-                    {
-                        foreach (var li in liNodes)
-                        {
-                            string feature = li.InnerText.Trim();
-                            if (feature.Contains("PoE")) PoE = int.TryParse(Regex.Match(feature, @"\d+").Value, out int poe) ? poe : null;
-                            if (feature.Contains("SFP")) SFP = int.TryParse(Regex.Match(feature, @"\d+").Value, out int sfp) ? sfp : null;
-                        }
-                    }
-                }
-            }
-
-            var priceNode = document.DocumentNode.SelectSingleNode("//div[contains(@class, 'price')]");
-            if (priceNode != null)
-            {
-                string rawPrice = priceNode.InnerText.Trim();
-                rawPrice = Regex.Replace(rawPrice, @"\s+", "");
-                Match match = Regex.Match(rawPrice, @"\d+");
-                if (match.Success)
-                {
-                    price = int.Parse(match.Value);
-                }
-                Console.WriteLine($"цена: {price}");
-            }
-            name.Replace("Коммутатор уличный Mastermann", name);
-            return SwitchData.CreateSwitch(
-                Company: NAMECOMPANY,
-                Name: name,
-                Url: url,
-                Price: price,
-                PoEports: PoE,
-                SFPports: SFP,
-                controllable: true,
-                UPS: isUPS
-                );
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Ошибка парсинга: {ex.Message}");
-            return null;
-        }
-    }
+    
 }

@@ -82,7 +82,7 @@ namespace ParserFortTelecom.Parsers
                     cell = currentRow.GetCell(2);
                     string stringcell = cell.ToString();
                     int.TryParse(stringcell, out int price);
-                    Console.WriteLine(columnName + " " + sfpcount + " " + poecount + " " + hasups + " " + price);
+                    //Console.WriteLine(columnName + " " + sfpcount + " " + poecount + " " + hasups + " " + price);
                     switches.Add(SwitchData.CreateSwitch(
                         Company: NAMECOMPANY,
                         Name: columnName,

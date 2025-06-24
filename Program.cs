@@ -24,15 +24,10 @@ class Program
         services.AddSingleton<HttpClient>();
 
         services.AddTransient<MasterManParser>();
-        //services.AddTransient<ISwitchParser, MasterManParser>();
         services.AddTransient<OsnovoParser>();
-       // services.AddTransient<ISwitchParser, OsnovoParser>();
         services.AddTransient<NSGateParser>();
-        //services.AddTransient<ISwitchParser, NSGateParser>();
         services.AddTransient<TFortisParser>();
-        //services.AddTransient<ISwitchParser, TFortisParser>();
         services.AddTransient<RelionParser>();
-        //services.AddTransient<ISwitchParser, RelionParser>();
         services.AddTransient<App>();
 
         var serviceProvider = services.BuildServiceProvider();
