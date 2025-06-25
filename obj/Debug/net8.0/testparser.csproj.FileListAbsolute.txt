@@ -407,3 +407,4 @@ C:\Users\demra\source\repos\testparser\testparser\bin\Debug\net8.0\System.Text.E
 C:\Users\demra\source\repos\testparser\testparser\bin\Debug\net8.0\System.Text.Json.dll
 C:\Users\demra\source\repos\testparser\testparser\bin\Debug\net8.0\runtimes\browser\lib\net8.0\System.Text.Encodings.Web.dll
 C:\Users\demra\source\repos\testparser\testparser\bin\Debug\net8.0\PuppeteerSharp.dll
+C:\Users\demra\source\repos\testparser\testparser\bin\Debug\net8.0\RabbitMQ.Client.dll

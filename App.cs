@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using testparser.Parsers.Interfaces;
 using testparser.Parsers;
+using testparser.Entity;
 
 namespace testparser
 {
@@ -13,11 +14,13 @@ namespace testparser
     {
         private readonly IServiceProvider _serviceProvider;
         private readonly ILogger _logger;
+        private readonly RabbitMqService _rabbitMqService;
 
-        public App(IServiceProvider serviceProvider, ILogger<App> logger)
+        public App(IServiceProvider serviceProvider, ILogger<App> logger, RabbitMqService rabbitMqService)
         {
             _serviceProvider = serviceProvider;
             _logger = logger;
+            _rabbitMqService = rabbitMqService;
         }
 
         public async Task Run()
@@ -43,19 +46,23 @@ namespace testparser
                 var parser = _serviceProvider.GetRequiredService<TParser>();
                 var switches = await parser.ParseAsync();
                 dbSaver.SaveSwitches(switches);
+                var logEntry = loggerdto.Create($"Парсер {parserName} отработал успешно", true);
                 _logger.LogInformation(
                     "Парсер {ParserName} успешно обработан",
                     parserName,
                     switches.Count
                 );
+                _rabbitMqService.SendParserResult(logEntry);
             }
             catch (Exception ex)
             {
+                var errorEntry = loggerdto.Create($"Парсер {parserName} отработал неудачно\n Ошибка {ex.Message}", false);
                 _logger.LogError(
                     "Ошибка в парсере {ParserName}: {Message}",
                     parserName,
                     ex.Message
                 );
+                _rabbitMqService.SendParserResult(errorEntry);
             }
         }
     }

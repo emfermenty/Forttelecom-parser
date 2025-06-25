@@ -1,12 +1,8 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using ParserFortTelecom.Parsers;
-using System;
-using System.Net.Http;
-using System.Threading.Tasks;
-using testparser.Parsers.Interfaces;
 using testparser.Parsers;
 using testparser;
-using Microsoft.Extensions.Logging;
 
 class Program
 {
@@ -15,12 +11,12 @@ class Program
         var services = new ServiceCollection();
 
         services.AddLogging(configure => configure
-            .AddConsole() 
-            .SetMinimumLevel(LogLevel.Debug) 
+            .AddConsole()
+            .SetMinimumLevel(LogLevel.Debug)
         );
 
-        services.AddSingleton<DatabaseConnection>(); 
-        services.AddTransient<DatabaseSaver>();     
+        services.AddSingleton<DatabaseConnection>();
+        services.AddTransient<DatabaseSaver>();
         services.AddSingleton<HttpClient>();
 
         services.AddTransient<MasterManParser>();
@@ -30,16 +26,25 @@ class Program
         services.AddTransient<RelionParser>();
         services.AddTransient<App>();
 
+        services.AddSingleton<RabbitMqService>();
+
         var serviceProvider = services.BuildServiceProvider();
+        var logger = serviceProvider.GetRequiredService<ILogger<Program>>();
 
         try
         {
-            var app = serviceProvider.GetRequiredService<App>();
-            await app.Run();
+            var rabbitMqService = serviceProvider.GetRequiredService<RabbitMqService>();
+            rabbitMqService.StartListening();
+
+            logger.LogInformation("Приложение запущено и ожидает сообщения 'run' в очереди 'parser.run'...");
+            logger.LogInformation("Для остановки нажмите любую клавишу...");
+
+            Console.ReadKey();
+
+            rabbitMqService.StopListening();
         }
         catch (Exception ex)
         {
-            var logger = serviceProvider.GetRequiredService<ILogger<Program>>();
             logger.LogCritical(ex, "Критическая ошибка в приложении: {Message}", ex.Message);
         }
     }
