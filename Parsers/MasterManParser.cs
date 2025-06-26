@@ -38,6 +38,7 @@ public class MasterManParser : ISwitchParser
         {
             Headless = true,
             ExecutablePath = executablePath,
+            Args = new[] { "--no-sandbox", "--disable-setuid-sandbox" },
             Timeout = 30000
         });
         Console.WriteLine("Открываем страницу...");
@@ -84,7 +85,6 @@ public class MasterManParser : ISwitchParser
                 bool hasPoE = match.Groups[2].Success;
                 int sfpCount = int.Parse(match.Groups[3].Value);
                 bool hasUPS = match.Groups[4].Success;
-
                 Console.WriteLine($"Портов: {portsCount}");
                 Console.WriteLine($"PoE: {hasPoE}");
                 Console.WriteLine($"SFP: {sfpCount}");
@@ -107,5 +107,5 @@ public class MasterManParser : ISwitchParser
         }
         return switches;
     }
-    
+
 }

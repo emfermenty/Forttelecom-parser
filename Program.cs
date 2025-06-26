@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using ParserFortTelecom.Parsers;
 using testparser.Parsers;
 using testparser;
+using System.Threading;
 
 class Program
 {
@@ -14,7 +15,7 @@ class Program
             .AddConsole()
             .SetMinimumLevel(LogLevel.Debug)
         );
-
+        //регистрация сервисов
         services.AddSingleton<DatabaseConnection>();
         services.AddTransient<DatabaseSaver>();
         services.AddSingleton<HttpClient>();
@@ -32,14 +33,15 @@ class Program
         var logger = serviceProvider.GetRequiredService<ILogger<Program>>();
 
         try
-        {
+        { //запускамся
             var rabbitMqService = serviceProvider.GetRequiredService<RabbitMqService>();
+            //вызываем слушателя
             rabbitMqService.StartListening();
 
             logger.LogInformation("Приложение запущено и ожидает сообщения 'run' в очереди 'parser.run'...");
             logger.LogInformation("Для остановки нажмите любую клавишу...");
 
-            Console.ReadKey();
+            await Task.Delay(Timeout.Infinite);
 
             rabbitMqService.StopListening();
         }

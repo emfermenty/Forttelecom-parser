@@ -19,20 +19,20 @@ public class RabbitMqService
         _serviceProvider = serviceProvider;
         _logger = logger;
     }
-
+    //слушает хост rabbitmq
     public void StartListening()
     {
         var factory = new ConnectionFactory()
         {
-            HostName = "sersh.keenetic.name", // или ваш хост
+            HostName = "sersh.keenetic.name", 
             Port = 5672,
-            UserName = "guest",     // или ваш пользователь
-            Password = "guest"      // или ваш пароль
+            UserName = "guest",     
+            Password = "guest"      
         };
-
+        //организует соединение 
         _connection = factory.CreateConnection();
         _channel = _connection.CreateModel();
-
+        //подключается к очереди
         _channel.QueueDeclare(queue: QueueName,
                              durable: false,
                              exclusive: false,
@@ -40,15 +40,17 @@ public class RabbitMqService
                              arguments: null);
 
         var consumer = new EventingBasicConsumer(_channel);
+        //при подключении к очереди попадает сюда
         consumer.Received += async (model, ea) =>
         {
             try
-            {
+            { //получаем сообщение через rabbit
                 var body = ea.Body.ToArray();
                 var message = Encoding.UTF8.GetString(body);
                 _logger.LogInformation("Получено сообщение: {Message}", message);
 
                 using var scope = _serviceProvider.CreateScope();
+                //при получении запускаем приложуху
                 var app = scope.ServiceProvider.GetRequiredService<App>();
                 await app.Run();
             }
