@@ -24,7 +24,10 @@ public class MasterManParser : ISwitchParser
     private async Task<List<SwitchData>> ParseSwitchDetails()
     {
         var switches = new List<SwitchData>();
-        var browserFetcher = new BrowserFetcher();
+        var browserFetcher = new BrowserFetcher(new BrowserFetcherOptions
+        {
+            Path = Path.Combine(Environment.CurrentDirectory, ".local-chromium")
+        });
 
         Console.WriteLine("Скачиваем браузер...");
         await browserFetcher.DownloadAsync();
@@ -38,8 +41,17 @@ public class MasterManParser : ISwitchParser
         {
             Headless = true,
             ExecutablePath = executablePath,
-            Args = new[] { "--no-sandbox", "--disable-setuid-sandbox" },
-            Timeout = 30000
+            Args = new[] { 
+                "--no-sandbox", 
+                "--disable-setuid-sandbox",
+                "--disable-dev-shm-usage",
+                "--disable-gpu",
+                "--single-process",
+                "--no-zygote",
+                "--remote-debugging-port=9222"
+            },
+            DefaultViewport = null,
+            Timeout = 120000
         });
         Console.WriteLine("Открываем страницу...");
         await using var page = await browser.NewPageAsync();

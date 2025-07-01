@@ -87,11 +87,16 @@ class OsnovoParser : ISwitchParser
                     Console.WriteLine($"Количество портов: {totalPorts}");
                     Console.WriteLine("Контролируемый: " + controllable);
                     Console.WriteLine("цена: " + price);
+                    if (!int.TryParse(price, out int parsedPrice))
+                    {
+                        Console.WriteLine($"Цена не найдена для товара {title}, пропускаем");
+                        continue;
+                    }
                     switches.Add(SwitchData.CreateSwitch(
                         Company: NAMECOMPANY,
                         Name: title,
                         Url: FILEURL,
-                        Price: int.TryParse(price, out int parsedPrice) ? parsedPrice : 0,
+                        Price: parsedPrice,
                         PoEports: int.TryParse(totalPorts, out int total) ? total : (int?)null,
                         SFPports: int.TryParse(sfpPorts, out int sfp) ? sfp : (int?)null,
                         controllable: controllable,

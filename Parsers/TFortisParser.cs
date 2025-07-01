@@ -96,9 +96,10 @@ namespace ParserFortTelecom.Parsers
 
             ICell priceCell = row.GetCell(col + 1);
             string priceStr = priceCell?.ToString() ?? string.Empty;
-            priceStr = Regex.Replace(priceStr, "[^0-9]", ""); // Удаляем все нецифровые символы
+            priceStr = Regex.Replace(priceStr, "[^0-9]", "");
+            string priceString = priceStr.Substring(0, priceStr.Length - 2);
 
-            if (int.TryParse(priceStr, out int price))
+            if (int.TryParse(priceString, out int price))
             {
                 Console.WriteLine("Цена: " + price);
                 switches.Add(CreateSwitchData(title, price, switchInfo));

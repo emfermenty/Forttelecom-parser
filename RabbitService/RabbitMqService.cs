@@ -2,9 +2,10 @@
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
+using System.Configuration;
 using System.Text;
-using testparser;
 using testparser.Entity;
+using testparser;
 
 public class RabbitMqService
 {
@@ -12,45 +13,56 @@ public class RabbitMqService
     private readonly ILogger<RabbitMqService> _logger;
     private IConnection _connection;
     private IModel _channel;
+
     private const string QueueName = "parser.run";
+    private const string ResultQueueName = "parser.result";
+
+    private readonly string _hostName;
+    private readonly int _port;
+    private readonly string _userName;
+    private readonly string _password;
 
     public RabbitMqService(IServiceProvider serviceProvider, ILogger<RabbitMqService> logger)
     {
         _serviceProvider = serviceProvider;
         _logger = logger;
+
+        // это лежит в app.config
+        _hostName = ConfigurationManager.AppSettings["rabbitmq_host"];
+        _port = int.Parse(ConfigurationManager.AppSettings["rabbitmq_port"]);
+        _userName = ConfigurationManager.AppSettings["rabbitmq_username"];
+        _password = ConfigurationManager.AppSettings["rabbitmq_password"];
     }
-    //слушает хост rabbitmq
+
     public void StartListening()
     {
         var factory = new ConnectionFactory()
         {
-            HostName = "sersh.keenetic.name", 
-            Port = 5672,
-            UserName = "guest",     
-            Password = "guest"      
+            HostName = _hostName,
+            Port = _port,
+            UserName = _userName,
+            Password = _password
         };
-        //организует соединение 
+
         _connection = factory.CreateConnection();
         _channel = _connection.CreateModel();
-        //подключается к очереди
+
         _channel.QueueDeclare(queue: QueueName,
-                             durable: false,
-                             exclusive: false,
-                             autoDelete: false,
-                             arguments: null);
+                            durable: false,
+                            exclusive: false,
+                            autoDelete: false,
+                            arguments: null);
 
         var consumer = new EventingBasicConsumer(_channel);
-        //при подключении к очереди попадает сюда
         consumer.Received += async (model, ea) =>
         {
             try
-            { //получаем сообщение через rabbit
+            {
                 var body = ea.Body.ToArray();
                 var message = Encoding.UTF8.GetString(body);
                 _logger.LogInformation("Получено сообщение: {Message}", message);
 
                 using var scope = _serviceProvider.CreateScope();
-                //при получении запускаем приложуху
                 var app = scope.ServiceProvider.GetRequiredService<App>();
                 await app.Run();
             }
@@ -61,8 +73,8 @@ public class RabbitMqService
         };
 
         _channel.BasicConsume(queue: QueueName,
-                             autoAck: true,
-                             consumer: consumer);
+                            autoAck: true,
+                            consumer: consumer);
 
         _logger.LogInformation("Слушатель RabbitMQ запущен для очереди: {QueueName}", QueueName);
     }
@@ -81,7 +93,7 @@ public class RabbitMqService
 
             _channel.BasicPublish(
                 exchange: "",
-                routingKey: "parser.result",
+                routingKey: ResultQueueName,
                 basicProperties: null,
                 body: body);
         }
@@ -95,16 +107,15 @@ public class RabbitMqService
     {
         var factory = new ConnectionFactory()
         {
-            HostName = "sersh.keenetic.name",
-            Port = 5672,
-            UserName = "guest",
-            Password = "guest"
+            HostName = _hostName,
+            Port = _port,
+            UserName = _userName,
+            Password = _password
         };
         _connection = factory.CreateConnection();
         _channel = _connection.CreateModel();
 
-        // Объявляем очередь для результатов
-        _channel.QueueDeclare(queue: "parser.result",
+        _channel.QueueDeclare(queue: ResultQueueName,
                             durable: false,
                             exclusive: false,
                             autoDelete: false,
